@@ -11,6 +11,10 @@ const noteRoutes = require("./routes/noteRoutes");
 const identityRoutes = require("./routes/identityRoutes");
 const vaultRoutes = require("./routes/vaultRoutes");
 const settingsRoutes = require("./routes/settingsRoutes");
+const otpRoutes = require("./routes/otpRoutes");
+const PendingUser = require("./models/PendingUser");
+const registrationRoutes = require("./routes/registrationRoutes");
+const passwordResetRoutes = require("./routes/passwordResetRoutes");
 
 const app = express();
 
@@ -40,3 +44,9 @@ app.get("/", (req, res) => {
 app.listen(5000, () => {
   console.log("Server running on port 5000");
 });
+app.use("/api/otp", otpRoutes);
+app.use("/api/register", registrationRoutes);
+app.use(
+  "/api/password-reset",
+  passwordResetRoutes
+);

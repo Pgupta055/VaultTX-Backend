@@ -87,6 +87,52 @@ const getPasswords = async (req, res) => {
 
   }
 };
+const getPasswordsByDomain = async (req, res) => {
+  try {
+    const { domain } = req.params;
+
+    const passwords = await Password.find({
+      user: req.user.id,
+    });
+
+    const normalize = (str = "") =>
+  str
+    .toLowerCase()
+    .replace(/^https?:\/\//, "")
+    .replace(/^www\./, "")
+    .replace(/\/$/, "");
+
+const search = normalize(domain);
+
+const matched = passwords.filter((item) => {
+  const website = normalize(item.website);
+  const url = normalize(item.url);
+
+  return (
+    website.includes(search) ||
+    search.includes(website) ||
+    url.includes(search) ||
+    search.includes(url)
+  );
+});
+
+    const decrypted = matched.map((item) => ({
+      ...item.toObject(),
+      password: decrypt(item.password),
+    }));
+
+    res.json({
+      success: true,
+      passwords: decrypted,
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
 const importVault = async (req, res) => {
   console.log("========== IMPORT ==========");
 console.log(req.body);
@@ -485,6 +531,7 @@ module.exports = {
 module.exports = {
   addPassword,
   getPasswords,
+  getPasswordsByDomain,
   updatePassword,
   deletePassword,
   exportVault,

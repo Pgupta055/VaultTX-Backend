@@ -7,6 +7,10 @@ const LoginActivity = require("../models/LoginActivity");
 const Password = require("../models/Password");
 const Note = require("../models/Note");
 const Identity = require("../models/Identity");
+const generateOTP = require("../utils/generateOTP");
+const otpTemplate = require("../utils/otpTemplate");
+const sendEmail = require("../services/emailService");
+const Session = require("../models/Session");
 const getProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select("-password");
@@ -137,91 +141,114 @@ const deleteAccount = async (req, res) => {
   }
 };
 const login = async (req, res) => {
+  console.log("🚀 Login API called");
 
   try {
-
     const { email, password } = req.body;
 
+    // Find User
     const user = await User.findOne({ email });
 
     if (!user) {
-
       return res.status(400).json({
         success: false,
         message: "Invalid Email or Password",
       });
-
     }
 
+    // Check Password
     const isMatch = await bcrypt.compare(
       password,
       user.password
     );
 
     if (!isMatch) {
-
       return res.status(400).json({
         success: false,
         message: "Invalid Email or Password",
       });
-
     }
 
+    // Generate JWT
     const token = generateToken(user._id);
+
+    console.log("========== LOGIN ==========");
+    console.log("User:", user.email);
+    console.log("Generated Token:", token);
+
     const parser = new UAParser(req.headers["user-agent"]);
-const result = parser.getResult();
+    const result = parser.getResult();
 
-await LoginActivity.create({
-  user: user._id,
+    // Save Login Activity
+    await LoginActivity.create({
+      user: user._id,
 
-  browser: result.browser.name || "Unknown",
+      browser: result.browser.name || "Unknown",
 
-  os: result.os.name || "Unknown",
+      os: result.os.name || "Unknown",
 
-  device:
-    result.device.type === "mobile"
-      ? "Mobile"
-      : result.device.type === "tablet"
-      ? "Tablet"
-      : "Desktop",
+      device:
+        result.device.type === "mobile"
+          ? "Mobile"
+          : result.device.type === "tablet"
+          ? "Tablet"
+          : "Desktop",
 
-  ipAddress:
-    req.headers["x-forwarded-for"] ||
-    req.socket.remoteAddress ||
-    req.ip,
+      ipAddress:
+        req.headers["x-forwarded-for"] ||
+        req.socket.remoteAddress ||
+        req.ip,
 
-  userAgent: req.headers["user-agent"],
-});
+      userAgent: req.headers["user-agent"],
+    });
 
-    res.status(200).json({
+    // Debug
+    const existing = await Session.findOne({ token });
+    console.log("Existing Session:", existing);
 
-      success: true,
+    // Remove previous sessions of this user
+    await Session.deleteMany({ user: user._id });
 
+    // Create new session
+    await Session.create({
+      user: user._id,
       token,
 
-      user: {
+      browser: result.browser.name || "Unknown",
 
+      os: result.os.name || "Unknown",
+
+      device:
+        result.device.type === "mobile"
+          ? "Mobile"
+          : result.device.type === "tablet"
+          ? "Tablet"
+          : "Desktop",
+
+      ipAddress:
+        req.headers["x-forwarded-for"] ||
+        req.socket.remoteAddress ||
+        req.ip,
+    });
+
+    res.status(200).json({
+      success: true,
+      token,
+      user: {
         id: user._id,
         fullName: user.fullName,
         email: user.email,
-
       },
-
     });
 
   } catch (error) {
-
     console.log(error);
 
     res.status(500).json({
-
       success: false,
       message: "Server Error",
-
     });
-
   }
-
 };
 const changePassword = async (req, res) => {
   try {
@@ -340,12 +367,57 @@ const verifyMasterPassword = async (req, res) => {
 
   }
 };
+const testEmail = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    const otp = generateOTP();
+
+    await sendEmail({
+      to: email,
+      subject: "SecureVault Test OTP",
+      html: otpTemplate(otp),
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Test email sent successfully.",
+      otp, // Remove this later. It's only for testing.
+    });
+  } catch (error) {
+    console.error(error);
+
+    res.status(500).json({
+      success: false,
+      message: "Unable to send email.",
+    });
+  }
+};
+const logout = async (req, res) => {
+  try {
+    const token = req.headers.authorization.split(" ")[1];
+
+    await Session.findOneAndDelete({ token });
+
+    res.status(200).json({
+      success: true,
+      message: "Logged out successfully.",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
 module.exports = {
   register,
   login,
+  logout,
   verifyMasterPassword,
   getProfile,
   deleteAccount,
   changePassword,
   changeMasterPassword,
+  testEmail,
 };

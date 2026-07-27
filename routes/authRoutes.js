@@ -1,12 +1,14 @@
 const {
   register,
   login,
+  logout,
   verifyMasterPassword,
   getProfile,
 
   changePassword,
   changeMasterPassword,
   deleteAccount,
+  testEmail,
 
 } = require("../controllers/authController");
 
@@ -40,5 +42,6 @@ router.delete(
   protect,
   deleteAccount
 );
-
+router.post("/test-email", testEmail);
+router.post("/logout", protect, logout);
 module.exports = router;

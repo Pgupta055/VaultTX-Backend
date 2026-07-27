@@ -5,9 +5,9 @@ const router = express.Router();
 const {
   addPassword,
   getPasswords,
+  getPasswordsByDomain,
   updatePassword,
   deletePassword,
-  exportPasswords,
   exportVault,
   importVault,
   toggleFavorite,
@@ -16,6 +16,11 @@ const {
 const protect = require("../middleware/authMiddleware");
 
 router.post("/", protect, addPassword);
+router.get(
+  "/domain/:domain",
+  protect,
+  getPasswordsByDomain
+);
 router.get("/", protect, getPasswords);
 router.delete("/:id", protect, deletePassword);
 router.put("/:id", protect, updatePassword);
