@@ -21,14 +21,13 @@ const app = express();
 connectDB();
 
 // Middleware FIRST
-app.use(cors({
-  origin: [
-    "http://localhost:5173",
-    "https://vault-x-sand.vercel.app",
-    "https://vault-ajsz4n8eg-pgupta0555-projects.vercel.app"
-  ],
-  credentials: true,
-}));
+const cors = require("cors");
+
+app.use(cors());
+
+app.options("*", cors());
+
+app.use(express.json());
 
 app.use(express.json());
 
