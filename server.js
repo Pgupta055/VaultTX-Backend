@@ -21,7 +21,7 @@ const app = express();
 connectDB();
 
 // Middleware FIRST
-const cors = require("cors");
+
 
 app.use(cors());
 
