@@ -22,7 +22,10 @@ connectDB();
 
 // Middleware FIRST
 app.use(cors({
-  origin: "http://localhost:5173",
+  origin: [
+    "http://localhost:5173",
+    "https://vault-x-sand.vercel.app"
+  ],
   credentials: true,
 }));
 
@@ -41,8 +44,10 @@ app.get("/", (req, res) => {
   res.send("Password Manager Backend Running");
 });
 
-app.listen(5000, () => {
-  console.log("Server running on port 5000");
+const PORT = process.env.PORT || 5000;
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
 app.use("/api/otp", otpRoutes);
 app.use("/api/register", registrationRoutes);
