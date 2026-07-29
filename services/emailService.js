@@ -12,6 +12,18 @@ const transporter = nodemailer.createTransport({
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
   },
+  requireTLS: true,
+  tls: {
+    minVersion: "TLSv1.2",
+    rejectUnauthorized: false,
+  },
+});
+transporter.verify((err, success) => {
+  if (err) {
+    console.error("SMTP VERIFY ERROR:", err);
+  } else {
+    console.log("SMTP SERVER READY");
+  }
 });
 
 const sendEmail = async ({ to, subject, html }) => {
