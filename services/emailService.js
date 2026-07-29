@@ -1,34 +1,26 @@
-const nodemailer = require("nodemailer");
-console.log("EMAIL_USER:", process.env.EMAIL_USER);
-console.log("EMAIL_PASS exists:", !!process.env.EMAIL_PASS);
-const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 465,
-  secure: true,
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-  connectionTimeout: 30000,
-  greetingTimeout: 30000,
-  socketTimeout: 30000,
-});
+const { Resend } = require("resend");
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 const sendEmail = async ({ to, subject, html }) => {
   try {
-    await transporter.sendMail({
-      from: `"SecureVault" <${process.env.EMAIL_USER}>`,
+    const { data, error } = await resend.emails.send({
+      from: "VaultTX <onboarding@resend.dev>",
       to,
       subject,
       html,
     });
 
-    console.log(`📧 Email sent to ${to}`);
+    if (error) {
+      console.error(error);
+      throw error;
+    }
+
+    console.log("📧 Email sent:", data);
   } catch (error) {
     console.error("========== EMAIL ERROR ==========");
     console.error(error);
     console.error("================================");
-
     throw error;
   }
 };
