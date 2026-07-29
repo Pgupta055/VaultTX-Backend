@@ -5,6 +5,7 @@ const otpTemplate = require("../utils/otpTemplate");
 
 const sendRegistrationOTP = async (req, res) => {
   try {
+    console.log("========== SEND OTP ==========");
 
     const {
       fullName,
@@ -13,34 +14,23 @@ const sendRegistrationOTP = async (req, res) => {
       masterPassword,
     } = req.body;
 
-    if (
-      !fullName ||
-      !email ||
-      !password ||
-      !masterPassword
-    ) {
-      return res.status(400).json({
-        success: false,
-        message: "All fields are required.",
-      });
-    }
+    console.log("1. Body received");
 
-    const existingUser =
-      await User.findOne({ email });
+    const existingUser = await User.findOne({ email });
+
+    console.log("2. Existing user checked");
 
     if (existingUser) {
       return res.status(400).json({
         success: false,
-        message:
-          "Email already registered.",
+        message: "Email already registered.",
       });
     }
 
-    const hashedPassword =
-      await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedMaster = await bcrypt.hash(masterPassword, 10);
 
-    const hashedMaster =
-      await bcrypt.hash(masterPassword, 10);
+    console.log("3. Passwords hashed");
 
     await createPendingUser({
       fullName,
@@ -49,34 +39,35 @@ const sendRegistrationOTP = async (req, res) => {
       masterPassword: hashedMaster,
     });
 
-    const otp = await createOTP(
-      email,
-      "registration"
-    );
+    console.log("4. Pending user created");
+
+    const otp = await createOTP(email, "registration");
+
+    console.log("5. OTP:", otp);
+
+    console.log("6. Sending email...");
 
     await sendEmail({
       to: email,
-      subject:
-        "SecureVault Email Verification",
+      subject: "SecureVault Email Verification",
       html: otpTemplate(otp),
     });
 
+    console.log("7. Email sent");
+
     return res.json({
       success: true,
-      message:
-        "OTP sent successfully.",
+      message: "OTP sent successfully.",
     });
 
   } catch (error) {
-
+    console.error("❌ FAILED HERE");
     console.error(error);
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
-      message:
-        "Unable to send OTP.",
+      message: "Unable to send OTP.",
     });
-
   }
 };
 
