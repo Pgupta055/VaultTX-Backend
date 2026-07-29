@@ -174,7 +174,7 @@ const resendRegistrationOTP = async (req, res) => {
   try {
     const { email } = req.body;
 
-    const otp = await createOTP(email, "REGISTER");
+    const otp = await createOTP(email, "registration");
 
     await sendEmail({
       to: email,

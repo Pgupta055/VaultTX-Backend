@@ -1,18 +1,20 @@
 const PendingUser = require("../models/PendingUser");
 
 const createPendingUser = async (userData) => {
-    await PendingUser.deleteMany({
-        email: userData.email,
-    });
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
 
-    const expiresAt = new Date(
-        Date.now() + 5 * 60 * 1000
+    return PendingUser.findOneAndUpdate(
+        { email: userData.email },
+        {
+            ...userData,
+            expiresAt,
+        },
+        {
+            upsert: true,
+            new: true,
+            setDefaultsOnInsert: true,
+        }
     );
-
-    return PendingUser.create({
-        ...userData,
-        expiresAt,
-    });
 };
 
 const getPendingUser = async (email) => {
