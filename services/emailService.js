@@ -3,26 +3,23 @@ const nodemailer = require("nodemailer");
 console.log("SMTP_HOST:", process.env.SMTP_HOST);
 console.log("SMTP_PORT:", process.env.SMTP_PORT);
 console.log("SMTP_USER:", process.env.SMTP_USER);
+console.log("SMTP_PASS exists:", !!process.env.SMTP_PASS);
 
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,
   port: Number(process.env.SMTP_PORT),
-  secure: false,
+  secure: true, // IMPORTANT for port 465
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
   },
-  requireTLS: true,
-  tls: {
-    minVersion: "TLSv1.2",
-    rejectUnauthorized: false,
-  },
 });
-transporter.verify((err, success) => {
+
+transporter.verify((err) => {
   if (err) {
     console.error("SMTP VERIFY ERROR:", err);
   } else {
-    console.log("SMTP SERVER READY");
+    console.log("✅ SMTP SERVER READY");
   }
 });
 
